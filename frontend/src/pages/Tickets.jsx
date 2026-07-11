@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Send, Circle } from "lucide-react";
+import { Send, Circle, ArrowLeft } from "lucide-react";
 import api from "../services/api";
 import { useSocket } from "../context/SocketContext";
 
@@ -81,12 +81,12 @@ export default function Tickets() {
       <h1 className="font-display font-bold text-2xl mb-1">Live queue &amp; tickets</h1>
       <p className="text-ink/60 mb-6">Conversations your AI agent escalated to a human.</p>
 
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
         {["", "open", "pending", "resolved"].map((s) => (
           <button
             key={s}
             onClick={() => setStatusFilter(s)}
-            className={`text-sm font-medium px-3.5 py-1.5 rounded-full transition-colors ${
+            className={`text-sm font-medium px-3.5 py-1.5 rounded-full transition-colors whitespace-nowrap ${
               statusFilter === s ? "bg-ink text-white" : "bg-white border border-black/10 text-ink/60 hover:text-ink"
             }`}
           >
@@ -96,7 +96,8 @@ export default function Tickets() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <div className="lg:col-span-2 card overflow-hidden">
+        {/* Ticket list: hidden on mobile once a ticket is selected */}
+        <div className={`lg:col-span-2 card overflow-hidden ${selected ? "hidden lg:block" : "block"}`}>
           {tickets.length === 0 ? (
             <p className="p-6 text-sm text-ink/50">No tickets in this view.</p>
           ) : (
@@ -124,22 +125,31 @@ export default function Tickets() {
           )}
         </div>
 
-        <div className="lg:col-span-3 card flex flex-col h-[65vh]">
+        {/* Conversation panel: hidden on mobile until a ticket is selected */}
+        <div className={`lg:col-span-3 card flex-col h-[65vh] ${selected ? "flex" : "hidden lg:flex"}`}>
           {!selected ? (
             <div className="flex-1 flex items-center justify-center text-sm text-ink/40">
               Select a ticket to view the conversation
             </div>
           ) : (
             <>
-              <div className="px-5 py-4 border-b border-black/5 flex justify-between items-center">
-                <div>
-                  <p className="font-semibold text-sm">{selected.conversationId.customerName}</p>
-                  <p className="text-xs text-ink/40">{selected.subject}</p>
+              <div className="px-5 py-4 border-b border-black/5 flex justify-between items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <button
+                    onClick={() => setSelected(null)}
+                    className="lg:hidden shrink-0 text-ink/60 hover:text-ink"
+                  >
+                    <ArrowLeft size={18} />
+                  </button>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-sm truncate">{selected.conversationId.customerName}</p>
+                    <p className="text-xs text-ink/40 truncate">{selected.subject}</p>
+                  </div>
                 </div>
                 <select
                   value={selected.status}
                   onChange={(e) => updateStatus(e.target.value)}
-                  className="text-sm border border-black/10 rounded-lg px-2 py-1"
+                  className="text-sm border border-black/10 rounded-lg px-2 py-1 shrink-0"
                 >
                   <option value="open">Open</option>
                   <option value="pending">Pending</option>
@@ -151,7 +161,7 @@ export default function Tickets() {
                 {selected.conversationId.messages.map((m, i) => (
                   <div key={i} className={`flex ${m.sender === "customer" ? "justify-start" : "justify-end"}`}>
                     <div
-                      className={`max-w-[75%] px-3.5 py-2 rounded-2xl text-sm ${
+                      className={`max-w-[85%] sm:max-w-[75%] px-3.5 py-2 rounded-2xl text-sm ${
                         m.sender === "customer"
                           ? "bg-white border border-black/10 rounded-bl-sm"
                           : m.sender === "ai"
